@@ -4,6 +4,7 @@ import nextstep.subway.applicaion.dto.PathResponse;
 import nextstep.subway.domain.Line;
 import nextstep.subway.domain.PathFinder;
 import nextstep.subway.domain.Station;
+import nextstep.subway.exception.PathOriginSameAsTargetException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,19 +14,23 @@ public class PathService {
 
     private final LineService lineService;
     private final StationService stationService;
+    private final PathFinder pathFinder;
 
-    public PathService(final LineService lineService, final StationService stationService) {
+    public PathService(final LineService lineService, final StationService stationService, final PathFinder pathFinder) {
         this.lineService = lineService;
         this.stationService = stationService;
+        this.pathFinder = pathFinder;
     }
 
-    public PathResponse findShortestPath(final Long source, final Long target) {
-        Station sourceStation = stationService.findById(source);
-        Station targetStation = stationService.findById(target);
+    public PathResponse findShortestPath(final Long sourceId, final Long targetId) {
+        if (sourceId.equals(targetId)) {
+            throw new PathOriginSameAsTargetException();
+        }
+
+        Station sourceStation = stationService.findById(sourceId);
+        Station targetStation = stationService.findById(targetId);
         List<Line> lines = lineService.findAllLines();
 
-        PathFinder pathFinder = new PathFinder(lines);
-
-        return PathResponse.from(pathFinder.findShortestPathWithDijkstra(sourceStation, targetStation));
+        return PathResponse.from(pathFinder.findShortestPath(lines, sourceStation, targetStation));
     }
 }
