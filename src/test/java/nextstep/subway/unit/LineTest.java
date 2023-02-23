@@ -240,12 +240,14 @@ class LineTest {
 
             private final Line line = 이호선.엔티티_생성();
             private final Station 중간_역 = 역삼역.엔티티_생성();
+            private final Station 하행_역 = 선릉역.엔티티_생성();
             private final Section 기존_상행_구간 = 강남_역삼_구간.엔티티_생성(1L, line);
+            private final Section 기존_하행_구간 = 역삼_선릉_구간.엔티티_생성(line, 중간_역, 하행_역);
 
             @BeforeEach
             void setUp() {
                 line.addSection(기존_상행_구간);
-                line.addSection(역삼_선릉_구간.엔티티_생성(2L, line));
+                line.addSection(기존_하행_구간);
             }
 
             @Test
@@ -253,7 +255,7 @@ class LineTest {
             void it_connecting_before_and_after_stations() throws Exception {
                 line.removeSection(중간_역);
 
-                assertThat(기존_상행_구간.getDownStation()).isEqualTo(선릉역.엔티티_생성());
+                assertThat(기존_상행_구간.getDownStation()).isEqualTo(하행_역);
                 assertThat(기존_상행_구간.getDistance()).isEqualTo(강남_역삼_구간.구간_거리() + 역삼_선릉_구간.구간_거리());
                 assertThat(line.getAllStations()).doesNotContain(중간_역);
             }

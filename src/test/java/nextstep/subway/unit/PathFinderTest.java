@@ -1,5 +1,6 @@
 package nextstep.subway.unit;
 
+import nextstep.subway.domain.JgraphtPathFinder;
 import nextstep.subway.domain.Line;
 import nextstep.subway.domain.PathFinder;
 import nextstep.subway.domain.ShortestPath;
@@ -33,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 class PathFinderTest {
 
+    private final PathFinder pathFinder = new JgraphtPathFinder();
+
     private Line 이_호선;
     private Line 삼_호선;
     private Line 신분당_선;
@@ -41,6 +44,8 @@ class PathFinderTest {
     private Station 교대_역;
     private Station 강남_역;
     private Station 양재_역;
+
+    private List<Line> 노선_목록;
 
     /**
      *                  (10)
@@ -67,18 +72,13 @@ class PathFinderTest {
         삼_호선.addSection(남부터미널_양재_구간.엔티티_생성(삼_호선, 남부터미널_역, 양재_역));
         이_호선.addSection(교대_강남_구간.엔티티_생성(이_호선, 교대_역, 강남_역));
         신분당_선.addSection(강남_양재_구간.엔티티_생성(신분당_선, 강남_역, 양재_역));
+
+        노선_목록 = List.of(이_호선, 삼_호선, 신분당_선);
     }
 
     @Nested
     @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
     class 경로_탐색 {
-
-        private PathFinder pathFinder;
-
-        @BeforeEach
-        void setUp() {
-            pathFinder = new PathFinder(List.of(이_호선, 삼_호선, 신분당_선));
-        }
 
         @Nested
         @DisplayName("교대역에서 양재역까지의 최단 경로를 탐색하면")
@@ -87,12 +87,12 @@ class PathFinderTest {
             @Test
             @DisplayName("총 구간 거리와 최단 경로의 역 목록들을 순서대로 반환한다")
             void it_returns_stations_and_tatal_distance() throws Exception {
-                ShortestPath shortestPathWithDijkstra = pathFinder.findShortestPathWithDijkstra(교대_역, 양재_역);
+                ShortestPath shortestPath = pathFinder.findShortestPath(노선_목록, 교대_역, 양재_역);
 
                 assertAll(
-                        () -> assertThat(shortestPathWithDijkstra.getTotalDistance())
+                        () -> assertThat(shortestPath.getTotalDistance())
                                 .isEqualTo(교대_남부터미널_구간.구간_거리() + 남부터미널_양재_구간.구간_거리()),
-                        () -> assertThat(shortestPathWithDijkstra.getStations())
+                        () -> assertThat(shortestPath.getStations())
                                 .containsExactly(교대_역, 남부터미널_역, 양재_역)
                 );
             }
@@ -105,7 +105,7 @@ class PathFinderTest {
             @Test
             @DisplayName("PathOriginSameAsTargetException 예외를 던진다")
             void it_returns_exception() throws Exception {
-                assertThatThrownBy(() -> pathFinder.findShortestPathWithDijkstra(교대_역, 교대_역))
+                assertThatThrownBy(() -> pathFinder.findShortestPath(노선_목록, 교대_역, 교대_역))
                         .isInstanceOf(PathOriginSameAsTargetException.class);
             }
         }
@@ -119,7 +119,7 @@ class PathFinderTest {
             @Test
             @DisplayName("PathTargetNotLinkedException 예외를 던진다")
             void it_returns_exception() throws Exception {
-                assertThatThrownBy(() -> pathFinder.findShortestPathWithDijkstra(교대_역, 연결되지_않은_역))
+                assertThatThrownBy(() -> pathFinder.findShortestPath(노선_목록, 교대_역, 연결되지_않은_역))
                         .isInstanceOf(PathTargetNotLinkedException.class);
             }
         }
